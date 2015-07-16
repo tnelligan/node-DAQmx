@@ -1,0 +1,300 @@
+<!doctype html>
+<html>
+
+<head>
+  <title>Socket.IO chat</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.96.1/css/materialize.min.css">
+  <style>
+    .demo-container {
+      box-sizing: border-box;
+      width: 850px;
+      height: 450px;
+      padding: 20px 15px 15px 15px;
+      margin: 15px auto 30px auto;
+      background: #fff;
+    }
+    
+    .demo-placeholder {
+      width: 100%;
+      height: 100%;
+      font-size: 14px;
+      line-height: 1.2em;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="valign-wrapper">
+    <div class="row container valign">
+      <div class="input-field col s6">
+        <select id="deviceDropdown"></select>
+      </div>
+      <div class="input-field col s6">
+        <input id="sampleRate" type="text" value="10000"></input>
+        <label class="active" for="sampleRate">Sample Rate</label>
+      </div>
+      <div class="input-field col s6">
+        <input id="maxVal" type="text" value=".3"></input>
+        <label class="active" for="maxV">Max Voltage</label>
+      </div>
+      <div class="input-field col s6">
+        <input id="minVal" type="text" value=".25"></input>
+        <label class="active" for="minV">Minimum Voltage</label>
+      </div>
+      <div class="col s12">
+        <button id="returnDevice" class="btn">Set up for collection</button>
+        <div class="right">
+          <button id="getCurrentValue" class="btn">Run</button>
+          <button id="stopData" class="btn">Stop</button>
+        </div>
+      </div>
+
+      <div class="demo-container col s12">
+        <div id="placeholder" class="demo-placeholder"></div>
+      </div>
+      <div class="col s12">
+        <button id="digitalSetup" class="btn">Set up for digital I/O</button>
+        <div class="right">
+          <button id="digitalTest" class="btn">Digital Write</button>
+          <button id="digitalRead" class="btn">Digital Read</button>
+        </div>
+      </div>
+      <div class="col s12">
+        <input type="checkbox" id="led3" />
+        <label for="led3"></label>
+        <input type="checkbox" id="led2" />
+        <label for="led2"></label>
+        <input type="checkbox" id="led1" />
+        <label for="led1"></label>
+        <input type="checkbox" id="led0" />
+        <label for="led0"></label>
+      </div>
+
+    </div>
+  </div>
+
+</body>
+
+</html>
+
+<script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
+<script src="//code.jquery.com/jquery-1.11.3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.96.1/js/materialize.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/async/1.3.0/async.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.3/jquery.flot.js"></script>
+<script>
+  $(document).ready(function () {
+    socket.emit("getDevNames", function (devs) {
+      console.log(devs);
+      for (var y = 0; y < devs.length; y++) {
+        socket.emit("getPhysChans", devs[y], function (data) {
+          var arr = data;
+          $.each(arr, function (index, value) {
+            $("#deviceDropdown").append($("<option>").text(value).attr("value", value));
+          });
+          $("select").material_select();
+        })
+      }
+    });
+  });
+
+  var socket = io();
+
+  var taskID;
+  var stop = false;
+  var taskID = 'task';
+
+
+  var plot = $.plot("#placeholder", [new Array(1000)], {
+    series: {
+      shadowSize: 0 // Drawing is faster without shadows
+    },
+    yaxis: {
+      min: $("#minVal").val(),
+      max: $("#maxVal").val()
+    },
+    xaxis: {
+      min: 0,
+      max: 1000,
+      show: false
+    }
+  });
+
+  function adjustYaxis() {
+    plot.getOptions().yaxes[0].min = $("#minVal").val();
+    plot.getOptions().yaxes[0].max = $("#maxVal").val();
+    plot.getOptions().yaxes[0].ticks = 5;
+    plot.setupGrid(); //only necessary if your new data will change the axes or grid
+    plot.draw();
+  }
+
+  $("#returnDevice").on("click", function () {
+    async.series([
+      function (callback) {
+        socket.emit("createTaskHandle", taskID, function (task) {
+          console.log(taskID + 'task');
+          callback();
+        });
+      },
+      function (callback) {
+        var channelConfigs = {
+          taskID: taskID,
+          device: $("#deviceDropdown").val(),
+          nameToAssignChannel: '',
+          terminalConfig: -1,
+          minVal: $("#minVal").val(),
+          maxVal: $("#maxVal").val(),
+          units: 10348
+        }
+        adjustYaxis();
+        socket.emit("createAnalogVoltageChannel", channelConfigs, function (ack) {
+          callback();
+        });
+      },
+      function (callback) {
+        var clockConfigs = {
+          taskID: taskID,
+          source: '',
+          rate: $("#sampleRate").val(),
+          activeEdge: 10280,
+          sampleMode: 10123,
+          sampsPerChanToAcquire: 1000
+        }
+        socket.emit("configSampleClock", clockConfigs, function (ack) {
+          callback();
+        });
+      },
+      function (callback) {
+        socket.emit("startTask", taskID, function (ack) {
+          callback();
+        });
+
+      }
+    ]);
+
+
+  });
+
+  function asyncLoop() {
+    var readConfigs = {
+      taskID: taskID,
+      numSampsPerChan: 1000,
+      timeout: 10.0,
+      fillMode: 0,
+      readArray: [],
+      arraySizeInSamps: 1000,
+      sampsPerChanRead: []
+    }
+    running = true;
+    async.series([
+        function (callback) {
+          socket.emit("waitForNextClock", readConfigs, function (ack) {
+            callback();
+          });
+        },
+        function (callback) {
+          socket.emit("readAnalogData", readConfigs, function (ack) {
+            //$("#value").html(ack[0]);
+
+            var res = [];
+            for (var i = 0; i < ack.length; ++i) {
+              res.push([i, ack[i]])
+            }
+
+
+            plot.setData([res]);
+
+            plot.draw();
+
+
+            callback();
+
+          });
+        }
+      ],
+      function (err, results) {
+        if (stop === true) {
+          running = false;
+          stop = false;
+          return;
+        }
+        asyncLoop();
+      });
+  }
+
+  $("#getCurrentValue").on("click", function () {
+    asyncLoop();
+  });
+
+  socket.on("readData", function (data) {
+    console.log(data);
+    $("#value").html(data);
+  });
+
+  $("#stopData").on("click", function () {
+    if (running === true) {
+      stop = true;
+    }
+  });
+
+  function getLedValue() {
+    var value = 0;
+    for (var dex = 0; dex < 4; dex++) {
+      if (!document.getElementById('led' + dex).checked) {
+        value += Math.pow(2, dex);
+      }
+    }
+    return value;
+  }
+
+  $("#digitalSetup").on("click", function () {
+    async.series([
+      function (callback) {
+        socket.emit("createTaskHandle", taskID, function (task) {
+          console.log(taskID + 'task');
+          callback();
+        });
+      },
+      function (callback) {
+        var channelConfigs = {
+          taskID: taskID,
+          lines: 'Dev1/port0',
+          nameToAssignToLines: '',
+          lineGrouping: 1
+        }
+        socket.emit("createDigitalOutputChannel", channelConfigs, function (ack) {
+          callback();
+        });
+      },
+      function (callback) {
+        socket.emit("startTask", taskID, function (ack) {
+          callback();
+        });
+      }
+    ]);
+  });
+
+  $("#digitalTest").on("click", function () {
+    var digitalConfigs = {
+      taskID: taskID,
+      numSampsPerChan: 1000,
+      autoStart: 1,
+      timeout: 10.0,
+      dataLayout: getLedValue()
+    }
+    socket.emit("writeDigitalPort", digitalConfigs, function (ack) {});
+  });
+
+  $("#digitalRead").on("click", function () {
+    var digitalConfigs = {
+      taskID: taskID,
+      numSampsPerChan: 1000,
+      autoStart: 1,
+      timeout: 10.0,
+      dataLayout: getLedValue()
+    }
+    socket.emit("readDigitalPort", digitalConfigs, function (ack) {
+      console.log(ack);
+    });
+  });
+</script>
