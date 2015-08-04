@@ -57,76 +57,106 @@ wss.on('connection', function (ws) {
         clearInterval(id);
     });
     ws.on('message', function (msg) {
-        msg = JSON.parse(msg);
-        console.log(msg);
-        switch(msg.type) {
-            case 'getSysDevNames':
-                var devices = new Buffer(1000);
-                devices.type = ref.types.char;
-                niDAQmx.DAQmxGetSysDevNames(devices, devices.length);
-                var deviceArray = ref.readCString(devices, 0).split(', ');
-                console.log(deviceArray);
-                var response = {
-                    'type': 'getSysDevNamesResponse',
-                    'data': deviceArray
-                }
-                ws.send(JSON.stringify(response));
-                break;
-            case 'getDevAIPhysicalChans':
-                var buf = new Buffer(1000);
-                buf.type = ref.types.char;
-                niDAQmx.DAQmxGetDevAIPhysicalChans(msg.data.device, buf, buf.length);
-                var channelString = ref.readCString(buf, 0).split(', ');
-                console.log(channelString);
-                var response = {
-                    'type': 'getDevAIPhysicalChansResponse',
-                    'data': channelString
-                }
-                ws.send(JSON.stringify(response));
-                break;
-            case 'createTask':
-                var task = new Buffer(1000);
-                task.type = ref.types.void;
-                niDAQmx.DAQmxCreateTask('', task);
-                newTask = ref.readPointer(task, 0);
-                dict[msg.data.taskID] = newTask;
-                console.log(dict[msg.data.taskID]);
-                var response = {
-                    'type': 'createTaskResponse',
-                    'data': msg.data.taskID
-                }
-                ws.send(JSON.stringify(response));
-                break;
-            case 'createAIVoltageChan':
-                console.log(niDAQmx.DAQmxCreateAIVoltageChan(dict[msg.data.taskID], msg.data.device, msg.data.nameToAssignChannel, msg.data.terminalConfig, msg.data.minVal, msg.data.maxVal, msg.data.units, ref.NULL));
-                break;
-            case 'cfgSampClkTiming':
-                console.log(niDAQmx.DAQmxCfgSampClkTiming(dict[msg.data.taskID], msg.data.source, msg.data.rate, msg.data.activeEdge, msg.data.sampleMode, msg.data.sampsPerChanToAcquire));
-                break;
-            case 'startTask':
-                niDAQmx.DAQmxStartTask(dict[msg.data.taskID]);
-                break;
-            case 'readAnalogF64':
-                var data = new DoubleArray(1000);
-                var read = new Buffer(1000);
-                read.type = ref.types.int32;
+        try
+        {
+            msg = JSON.parse(msg);
+            console.log(msg);
+            switch(msg.type) {
+                case 'getSysDevNames':
+                    var devices = new Buffer(1000);
+                    devices.type = ref.types.char;
+                    niDAQmx.DAQmxGetSysDevNames(devices, devices.length);
+                    var deviceArray = ref.readCString(devices, 0).split(', ');
+                    console.log(deviceArray);
+                    var response = {
+                        'type': 'getSysDevNamesResponse',
+                        'data': deviceArray
+                    }
+                    ws.send(JSON.stringify(response));
+                    break;
+                case 'getDevAIPhysicalChans':
+                    var buf = new Buffer(1000);
+                    buf.type = ref.types.char;
+                    niDAQmx.DAQmxGetDevAIPhysicalChans(msg.data.device, buf, buf.length);
+                    var channelString = ref.readCString(buf, 0).split(', ');
+                    console.log(channelString);
+                    var response = {
+                        'type': 'getDevAIPhysicalChansResponse',
+                        'data': channelString
+                    }
+                    ws.send(JSON.stringify(response));
+                    break;
+                case 'createTask':
+                    var task = new Buffer(1000);
+                    task.type = ref.types.void;
+                    niDAQmx.DAQmxCreateTask('', task);
+                    newTask = ref.readPointer(task, 0);
+                    dict[msg.data.taskID] = newTask;
+                    console.log(dict[msg.data.taskID]);
+                    var response = {
+                        'type': 'createTaskResponse',
+                        'data': msg.data.taskID
+                    }
+                    ws.send(JSON.stringify(response));
+                    break;
+                case 'createAIVoltageChan':
+                    console.log(niDAQmx.DAQmxCreateAIVoltageChan(dict[msg.data.taskID], msg.data.device, msg.data.nameToAssignChannel, msg.data.terminalConfig, msg.data.minVal, msg.data.maxVal, msg.data.units, ref.NULL));
+                    break;
+                case 'cfgSampClkTiming':
+                    niDAQmx.DAQmxCfgSampClkTiming(dict[msg.data.taskID], msg.data.source, msg.data.rate, msg.data.activeEdge, msg.data.sampleMode, msg.data.sampsPerChanToAcquire);
+                    break;
+                case 'startTask':
+                    niDAQmx.DAQmxStartTask(dict[msg.data.taskID]);
+                    break;
+                case 'readAnalogF64':
+                    var data = new DoubleArray(1000);
+                    var read = new Buffer(1000);
+                    read.type = ref.types.int32;
 
-                niDAQmx.DAQmxReadAnalogF64(dict[msg.data.taskID], msg.data.numSampsPerChan, msg.data.timeout, msg.data.fillMode, data, msg.data.arraySizeInSamps, read, ref.NULL);
-                console.log(data[0]);
-                console.log(data.toArray());
-                break;
-            case 'createDOChan':
-                
-                break;
-            case 'writeDigitalScalarU32':
-                
-                break;
-            case 'readDigitalScalarU32':
-                
-                break;
-            case 'waitForNextSampleClock':
-                
-                break;
+                    niDAQmx.DAQmxReadAnalogF64(dict[msg.data.taskID], msg.data.numSampsPerChan, msg.data.timeout, msg.data.fillMode, data, msg.data.arraySizeInSamps, read, ref.NULL);
+                    //console.log(data.toArray());
+                    var response = {
+                        'type': 'readAnalogF64Response',
+                        'data': data.toArray().toString()
+                    }
+                    ws.send(JSON.stringify(response));
+                    break;
+                case 'createDOChan':
+                    niDAQmx.DAQmxCreateDOChan(dict[msg.data.taskID], msg.data.lines, msg.data.nameToAssignToLines, msg.data.lineGrouping);
+                    break;
+                case 'writeDigitalScalarU32':
+                    niDAQmx.DAQmxWriteDigitalScalarU32(dict[msg.data.taskID], msg.data.autoStart, msg.data.timeout, msg.data.dataLayout, ref.NULL);
+                    /*var response = {
+                        'type': 'writeDigitalScalarU32Response',
+                        'data': 'none'
+                    }
+                    ws.send(JSON.stringify(response));*/
+                    break;
+                case 'readDigitalScalarU32':
+                    var read = new Buffer(1000);
+                    read.type = ref.types.int32;
+                    niDAQmx.DAQmxReadDigitalScalarU32(dict[msg.data.taskID], msg.data.timeout, read, ref.NULL);
+                    var response = {
+                        'type': 'readDigitalScalarU32Response',
+                        'data': ref.deref(read).toString()
+                    }
+                    ws.send(JSON.stringify(response));
+                    break;
+                case 'waitForNextSampleClock':
+                    var late = new Buffer(1000);
+                    late.type = ref.types.bool;
+                    niDAQmx.DAQmxWaitForNextSampleClock(dict[msg.data.taskID], -1, late);
+                    var response = {
+                        'type': 'waitForNextSampleClockResponse',
+                        'data': 'none'
+                    }
+                    ws.send(JSON.stringify(response));
+                    break;
+            }
+        }
+        catch (err) 
+        {
+            console.log('message could not be interpreted');
         }
     });
 });

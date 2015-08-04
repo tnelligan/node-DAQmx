@@ -10,8 +10,8 @@ app.get("/", function (req, res) {
   res.sendfile("index.html");
 });
 
-http.listen(5000, function () {
-  console.log("listening on *:5000");
+http.listen(3000, function () {
+  console.log("listening on *:3000");
 });
 
 var NIint32 = ref.refType('int');
@@ -101,7 +101,7 @@ io.on("connection", function (socket) {
     read.type = ref.types.int32;
 
     niDAQmx.DAQmxReadAnalogF64(dict[conf.taskID], conf.numSampsPerChan, conf.timeout, conf.fillMode, data, conf.arraySizeInSamps, read, ref.NULL);
-    console.log(data[0]);
+    //console.log(data[0]);
     ack(data.toArray());
   });
 
@@ -133,7 +133,7 @@ io.on("connection", function (socket) {
     var late = new Buffer(1000);
     late.type = ref.types.bool;
     var error = niDAQmx.DAQmxWaitForNextSampleClock(dict[conf.taskID], -1, late);
-    console.log(error);
+    //console.log(error);
     ack();
   });
 
