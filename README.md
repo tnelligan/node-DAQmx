@@ -18,6 +18,7 @@ This project uses node-ffi to expose the driver functions to the node.js server.
 1. Select a channel from the dropdown menu
 2. Adjust the sample rate, max voltage, and min voltage
 3. Click setup for collection, then click run
+4. At the moment, you will have to restart the node app and refresh the page to select a different channel or change any settings
 
 # Do digital I/O
 Somewhat hardcoded for now, to be improved upon
