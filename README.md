@@ -20,8 +20,7 @@ This project uses node-ffi to expose the driver functions to the node.js server.
 3. Click setup for collection, then click run
 4. At the moment, you will have to restart the node app and refresh the page to select a different channel or change any settings
 
-# Do digital I/O
-Somewhat hardcoded for now, to be improved upon
+# Do digital I/O (Somewhat hardcoded for now, to be improved upon)
 1. Click set up for digital I/O
 2. Click read to read in the state of the digital port on the DAQ device
 3. Click some of the checkbox buttons to change them, then click write to write those values to the DAQ device
