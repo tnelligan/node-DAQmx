@@ -1,7 +1,6 @@
 var app = require("express")(),
   http = require("http").Server(app),
   io = require("socket.io")(http),
-  request = require("request"),
   ref = require('ref'),
   ArrayType = require('ref-array'),
   ffi = require('ffi');
