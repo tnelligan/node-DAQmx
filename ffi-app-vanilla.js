@@ -16,6 +16,7 @@ var wss = new WebSocketServer({
 });
 
 // define C types to that will be used as arguments for FFI
+//TODO: tnelligan either get rid of these and replace with strings with asterisk, or explain whey these are here
 var NIint32 = ref.refType('int');
 var ptrChar = ref.refType(ref.types.CString);
 var TaskHandle = ref.refType('void');
@@ -28,6 +29,8 @@ var EveryNCallback = ffi.Function('int32', [TaskHandle, 'int32', 'uint32', TaskH
 
 
 // Foreign Function Library
+
+//TODO: add checking to see if they have the driver
 var niDAQmx = ffi.Library('nicaiu', {
   'DAQmxGetDevAIPhysicalChans': ['int32', ['string', ptrChar, 'ulong']],
   'DAQmxGetSysDevNames': ['int32', [ptrChar, 'int32']],
@@ -48,9 +51,6 @@ var niDAQmx = ffi.Library('nicaiu', {
 var dict = {};
 
 wss.on('connection', function (ws) {
-    var id = setInterval(function () {
-        //ws.send(JSON.stringify(process.memoryUsage().heapUsed), function (error) { console.log(error); });
-    }, 10);
     console.log('client connected');
     ws.on('close', function () {
         console.log('client disconnected');
@@ -63,6 +63,7 @@ wss.on('connection', function (ws) {
             console.log(msg);
             switch(msg.type) {
                 case 'getSysDevNames':
+                    //TODO: tnelligan make buffers able to adapt to the size they need to be
                     var devices = new Buffer(1000);
                     devices.type = ref.types.char;
                     niDAQmx.DAQmxGetSysDevNames(devices, devices.length);
