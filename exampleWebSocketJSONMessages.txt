@@ -25,16 +25,15 @@
 
 {
   "type": "startTask",
-  "data": {},
-  "taskID": "task1",
-  "numSampsPerChan": "1000",
-  "timeout": "10.0",
-  "fillMode": "0",
-  "readArray": "",
-  "arraySizeInSamps": "1000",
-  "sampsPerChanRead": [
-    "[]"
-  ]
+  "data": {
+    "taskID": "task1",
+    "numSampsPerChan": "1000",
+    "timeout": "10.0",
+    "fillMode": "0",
+    "readArray": "",
+    "arraySizeInSamps": "1000",
+    "sampsPerChanRead": []
+  }
 }
 
 {
