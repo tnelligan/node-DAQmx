@@ -1,0 +1,61 @@
+{
+  "type": "createAIVoltageChan",
+  "data": {
+    "taskID": "task1",
+    "device": "myDAQ1/ai0",
+    "nameToAssignChannel": "",
+    "terminalConfig": "-1",
+    "minVal": "-10",
+    "maxVal": "10",
+    "units": "10348"
+  }
+}
+
+{
+  "type": "cfgSampClkTiming",
+  "data": {
+    "taskID": "task1",
+    "source": "",
+    "rate": "10000",
+    "activeEdge": "10280",
+    "sampleMode": "10123",
+    "sampsPerChanToAcquire": "1000"
+  }
+}
+
+{
+  "type": "startTask",
+  "data": {},
+  "taskID": "task1",
+  "numSampsPerChan": "1000",
+  "timeout": "10.0",
+  "fillMode": "0",
+  "readArray": "",
+  "arraySizeInSamps": "1000",
+  "sampsPerChanRead": [
+    "[]"
+  ]
+}
+
+{
+  "type": "readAnalogF64",
+  "data": {
+    "taskID": "task1",
+    "numSampsPerChan": "1000",
+    "timeout": "10.0",
+    "fillMode": "0",
+    "readArray": [],
+    "arraySizeInSamps": "1000",
+    "sampsPerChanRead": []
+  }
+}
+
+{
+  "type": "createDOChan",
+  "data": {
+    "taskID": "task1",
+    "lines": "Dev1/port0",
+    "nameToAssignLines": "",
+    "lineGrouping": 1
+  }
+}
