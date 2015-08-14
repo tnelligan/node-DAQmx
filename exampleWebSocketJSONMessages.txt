@@ -1,4 +1,23 @@
 {
+  "type": "getSysDevNames",
+  "data": {}
+}
+
+{
+  "type": "getDevAIPhysicalChans",
+  "data": {
+    "device": device
+  }
+}
+
+{
+  "type": "createTask",
+  "data": {
+    "taskID": taskID
+  }
+}
+
+{
   "type": "createAIVoltageChan",
   "data": {
     "taskID": "task1",

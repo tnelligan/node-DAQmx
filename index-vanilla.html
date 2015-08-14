@@ -1,0 +1,136 @@
+<!doctype html>
+<html>
+
+<head>
+  <title>Socket.IO chat</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.96.1/css/materialize.min.css">
+  <style>
+    .demo-container {
+      box-sizing: border-box;
+      width: 850px;
+      height: 450px;
+      padding: 20px 15px 15px 15px;
+      margin: 15px auto 30px auto;
+      background: #fff;
+    }
+    
+    .demo-placeholder {
+      width: 100%;
+      height: 100%;
+      font-size: 14px;
+      line-height: 1.2em;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="valign-wrapper">
+    <div class="row container valign">
+      <div class="input-field col s6">
+        <select id="deviceDropdown"></select>
+      </div>
+      <div class="input-field col s6">
+        <input id="sampleRate" type="text" value="100000"></input>
+        <label class="active" for="sampleRate">Sample Rate</label>
+      </div>
+      <div class="input-field col s6">
+        <input id="maxVal" type="text" value=".27"></input>
+        <label class="active" for="maxV">Max Voltage</label>
+      </div>
+      <div class="input-field col s6">
+        <input id="minVal" type="text" value=".25"></input>
+        <label class="active" for="minV">Minimum Voltage</label>
+      </div>
+      <div class="col s12">
+        <button id="returnDevice" class="btn">Set up for collection</button>
+        <div class="right">
+          <button id="getCurrentValue" class="btn">Run</button>
+          <button id="stopData" class="btn">Stop</button>
+        </div>
+      </div>
+
+      <div class="demo-container col s12">
+        <div id="placeholder" class="demo-placeholder"></div>
+      </div>
+      <div class="col s12">
+        <button id="digitalSetup" class="btn">Set up for digital I/O</button>
+        <div class="right">
+          <button id="digitalTest" class="btn">Digital Write</button>
+          <button id="digitalRead" class="btn">Digital Read</button>
+        </div>
+      </div>
+      <div class="col s12">
+        <input type="checkbox" id="led3" />
+        <label for="led3"></label>
+        <input type="checkbox" id="led2" />
+        <label for="led2"></label>
+        <input type="checkbox" id="led1" />
+        <label for="led1"></label>
+        <input type="checkbox" id="led0" />
+        <label for="led0"></label>
+      </div>
+
+    </div>
+  </div>
+
+</body>
+
+</html>
+
+<script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
+<script src="//code.jquery.com/jquery-1.11.3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.96.1/js/materialize.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/async/1.3.0/async.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.3/jquery.flot.js"></script>
+<script>
+
+  
+  var url = 'ws://localhost:5000';
+  var ws = new WebSocket(url);
+
+  
+  
+  ws.onopen = function(evt) {
+    ws.onmessage = function(evts) {
+      onMessage(evts);
+    }
+    getSysDevNames();
+    getDevAIPhysicalChans('myDAQ1');
+    createTask("myTask");
+  }
+  
+  var messageBuffer = {};
+  
+  function onMessage(msg) {
+    console.log(msg);
+  }
+  
+  function getSysDevNames() {
+    var msg = {
+      "type": "getSysDevNames",
+      "data": {}
+    }
+    ws.send(JSON.stringify(msg));
+  }
+  
+  function getDevAIPhysicalChans(device) {
+    var msg = {
+      "type": "getDevAIPhysicalChans",
+      "data": {
+        "device": device
+      }
+    }
+    ws.send(JSON.stringify(msg));
+  }
+  
+  function createTask(taskID) {
+    var msg = {
+      "type": "createTask",
+      "data": {
+        "taskID": taskID
+      }
+    }
+    ws.send(JSON.stringify(msg));
+  }
+  
+</script>
