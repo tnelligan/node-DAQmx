@@ -26,5 +26,5 @@ This project uses node-ffi to expose the driver functions to the node.js server.
 3. Click some of the checkbox buttons to change them, then click write to write those values to the DAQ device
 
 ## Writing the client
-Establish a standard WebSocket connection
-To call the functions from the client, you must send a json message with the correct data. Examples of messages that could be sent are available in the jsonMessageExamples.txt file
+1. Establish a standard WebSocket connection
+2. To call the functions from the client, you must send a json message with the correct data. Examples of messages that could be sent are available in the jsonMessageExamples.txt file
